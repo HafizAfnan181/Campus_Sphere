@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ur" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusSphere - Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      content: [],
+      theme: { extend: {} }
+    }
+
+    // Toggle Password Visibility
+    function togglePassword() {
+      const pass = document.getElementById('password');
+      const icon = document.getElementById('eye');
+      if (pass.type === "password") {
+        pass.type = "text";
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        pass.type = "password";
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+      }
+    }
+  </script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-indigo-50 to-violet-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 min-h-screen flex items-center justify-center">
+
+  <div class="w-full max-w-md sm:max-w-lg mx-4 sm:mx-6">
+    <!-- Main Card -->
+    <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden">
+      
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 sm:p-8 text-white text-center">
+        <h1 class="text-3xl sm:text-4xl font-bold">CampusSphere</h1>
+        <p class="mt-2 opacity-90">Apne Campus ki Duniya</p>
+      </div>
+
+      <!-- Form Area -->
+      <div class="p-6 sm:p-8">
+        <h2 class="text-xl sm:text-2xl font-semibold text-slate-800 dark:text-white text-center mb-8">Sign In</h2>
+
+        <form id="loginForm" class="space-y-5 sm:space-y-6">
+          <div>
+            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">Email</label>
+            <input type="email" id="email"
+                   class="w-full px-4 sm:px-5 py-3 sm:py-4 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                   placeholder="Enter your email" required>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">Password</label>
+            <div class="relative">
+              <input type="password" id="password"
+                     class="w-full px-4 sm:px-5 py-3 sm:py-4 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                     placeholder="Enter password" required>
+              <i id="eye" onclick="togglePassword()" 
+                 class="fa-solid fa-eye absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 cursor-pointer hover:text-slate-600"></i>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <label class="flex items-center gap-2 text-sm">
+              <input type="checkbox" id="rememberMe" class="w-4 h-4 accent-blue-600">
+              <span class="text-slate-600 dark:text-slate-400">Remember me</span>
+            </label>
+            <a href="forgot-password.html" class="text-blue-600 hover:underline text-sm font-medium">
+              Forgot Password?
+            </a>
+          </div>
+
+          <button type="submit" id="loginBtn"
+                  class="w-full bg-blue-600 hover:bg-blue-700 transition py-4 rounded-2xl text-white font-semibold text-base sm:text-lg shadow-lg shadow-blue-500/30">
+            <span id="btnText">Login Now</span>
+          </button>
+        </form>
+
+        <div class="text-center mt-8">
+          <p class="text-slate-600 dark:text-slate-400">
+            Don't have an account? 
+            <a href="register.html" class="text-blue-600 font-semibold hover:underline">Create Account</a>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Text -->
+    <p class="text-center text-slate-500 dark:text-slate-400 text-sm mt-6">
+      © 2026 CampusSphere • Developer : Hafiz Afnan
+    </p>
+  </div>
+
+  <!-- API Script -->
+  <script src="js/api.js"></script>
+  
+  <script>
+    const API_URL = window.location.origin + '/social-site/backend/api';
+
+    // Form Submission
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const rememberMe = document.getElementById('rememberMe').checked;
+      const btnText = document.getElementById('btnText');
+      const loginBtn = document.getElementById('loginBtn');
+
+      if (email === "" || password === "") {
+        alert("❌ Please fill in all fields!");
+        return;
+      }
+
+      if (password.length < 6) {
+        alert("❌ Password must be at least 6 characters long!");
+        return;
+      }
+
+      // Show loading
+      btnText.textContent = "Logging in...";
+      loginBtn.disabled = true;
+      loginBtn.classList.add('opacity-50');
+
+      try {
+        const response = await fetch(`${API_URL}/auth/login.php`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            email: email,
+            password: password
+          })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+          if (result.needs_verification) {
+            // Save email + code for verification page — recovered here since
+            // the password already proved this is the right account owner.
+            localStorage.setItem("verify_email", result.email);
+            if (result.verification_code) {
+              localStorage.setItem("verify_code", result.verification_code);
+            }
+            alert("⚠️ Please verify your account first! Redirecting to verification page...");
+            window.location.href = "verify-email.html";
+            return;
+          }
+          alert("❌ " + result.message);
+          btnText.textContent = "Login Now";
+          loginBtn.disabled = false;
+          loginBtn.classList.remove('opacity-50');
+          return;
+        }
+
+        // Save JWT Token
+        if (rememberMe) {
+          localStorage.setItem("token", result.token);
+        } else {
+          sessionStorage.setItem("token", result.token);
+        }
+        localStorage.setItem("token", result.token);
+
+        // Save Logged In User
+        localStorage.setItem("loggedInUser", JSON.stringify(result.user));
+
+        alert("✅ Login Successful!");
+        window.location.href = "home.html";
+
+      } catch(error) {
+        console.error("Login Error:", error);
+        alert("❌ Cannot connect to server. Please check if XAMPP is running!");
+        btnText.textContent = "Login Now";
+        loginBtn.disabled = false;
+        loginBtn.classList.remove('opacity-50');
+      }
+    });
+
+    // Check if already logged in
+    if (localStorage.getItem("token") && localStorage.getItem("loggedInUser")) {
+      window.location.href = "home.html";
+    }
+  </script>
+</body>
+</html>

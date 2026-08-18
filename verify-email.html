@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ur" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusSphere - Verify Email</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-indigo-50 to-violet-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 min-h-screen flex items-center justify-center">
+
+  <div class="w-full max-w-md mx-4">
+    <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden">
+      
+      <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 sm:p-8 text-white text-center">
+        <h1 class="text-3xl sm:text-4xl font-bold">CampusSphere</h1>
+        <p class="mt-2 opacity-90">Verify Your Email</p>
+      </div>
+
+      <div class="p-6 sm:p-8">
+        <div class="text-center mb-6">
+          <i class="fa-solid fa-shield-halved text-6xl text-blue-500 mb-4"></i>
+          <p class="text-slate-600 dark:text-slate-400">Confirm your 6-digit code to activate your account</p>
+        </div>
+
+        <form id="verifyForm" class="space-y-5">
+          <div id="messageBox" class="hidden rounded-2xl p-4 text-center font-semibold"></div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">Email</label>
+            <input type="email" id="email" readonly
+                   class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-500 outline-none">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">Verification Code</label>
+            <input type="text" id="code" maxlength="6" placeholder="Enter 6-digit code"
+                   class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:border-blue-500 outline-none text-center text-2xl tracking-widest" required>
+          </div>
+
+          <button type="submit" id="verifyBtn"
+                  class="w-full bg-blue-600 hover:bg-blue-700 transition py-4 rounded-2xl text-white font-semibold text-lg shadow-lg shadow-blue-500/30">
+            <span id="btnText">Verify Email</span>
+          </button>
+        </form>
+
+        <div class="text-center mt-6">
+          <p class="text-slate-600 dark:text-slate-400 text-sm">
+            Wrong details?
+            <a href="register.html" class="text-blue-600 hover:underline font-semibold">Register Again</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = window.location.origin + '/social-site/backend/api';
+
+    // Auto-fill email + code — carried over directly from registration,
+    // no email needs to be sent or checked.
+    const savedEmail = localStorage.getItem("verify_email");
+    const savedCode = localStorage.getItem("verify_code");
+    if (savedEmail) {
+      document.getElementById('email').value = savedEmail;
+      if (savedCode) {
+        document.getElementById('code').value = savedCode;
+      }
+    } else {
+      window.location.href = "register.html";
+    }
+
+    function showMessage(text, type) {
+      const box = document.getElementById("messageBox");
+      box.classList.remove("hidden");
+      box.className = type === "success"
+        ? "bg-green-100 text-green-700 rounded-2xl p-4 text-center font-semibold mb-4"
+        : "bg-red-100 text-red-700 rounded-2xl p-4 text-center font-semibold mb-4";
+      box.textContent = text;
+    }
+
+    document.getElementById('verifyForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value;
+      const code = document.getElementById('code').value.trim();
+      const btn = document.getElementById('verifyBtn');
+      const btnText = document.getElementById('btnText');
+
+      if (code.length !== 6) {
+        showMessage("❌ Please enter a 6-digit code", "error");
+        return;
+      }
+
+      btn.disabled = true;
+      btnText.textContent = "Verifying...";
+
+      try {
+        const response = await fetch(`${API_URL}/auth/verify_email.php`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, code })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showMessage("✅ Email Verified!", "success");
+          btnText.textContent = "✓ Verified!";
+          btn.classList.remove("bg-blue-600");
+          btn.classList.add("bg-green-600");
+          
+          localStorage.removeItem("verify_email");
+          localStorage.removeItem("verify_code");
+          
+          setTimeout(() => {
+            window.location.href = "login.html";
+          }, 2000);
+        } else {
+          showMessage("❌ " + result.message, "error");
+          btn.disabled = false;
+          btnText.textContent = "Verify Email";
+        }
+      } catch (error) {
+        showMessage("❌ Connection error. Check XAMPP!", "error");
+        btn.disabled = false;
+        btnText.textContent = "Verify Email";
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="ur" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile - CampusSphere</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+</head>
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+
+  <!-- Navbar -->
+  <nav class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-3 md:px-6 py-3 md:py-4 flex items-center justify-between flex-wrap gap-3">
+      <h1 onclick="window.location.href='home.html'" class="text-xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent cursor-pointer">
+        CampusSphere
+      </h1>
+      <div class="flex items-center gap-3 md:gap-8 text-lg md:text-xl">
+        <a href="home.html" class="hover:text-blue-600 cursor-pointer"><i class="fa-solid fa-house"></i></a>
+        <a href="notifications.html" class="hover:text-blue-600 cursor-pointer"><i class="fa-solid fa-bell"></i></a>
+        <img id="navProfile" src="" class="w-8 h-8 md:w-9 md:h-9 rounded-2xl cursor-pointer ring-2 ring-blue-500 object-cover">
+        <button onclick="logout()"
+          class="flex items-center gap-2 bg-red-600 hover:bg-red-700 px-3 md:px-5 py-2 rounded-xl text-white font-semibold transition duration-300 hover:scale-105 shadow-lg">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span class="hidden sm:inline">Logout</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-4xl mx-auto">
+
+    <!-- Cover Photo -->
+    <div id="coverPhoto" onclick="triggerCoverUpload()"
+         class="h-40 md:h-64 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-cover bg-center relative group cursor-pointer">
+      <div id="coverEditHint" class="hidden absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition items-center justify-center">
+        <i class="fa-solid fa-camera text-3xl text-white"></i>
+      </div>
+    </div>
+
+    <!-- Profile Info -->
+    <div class="px-4 md:px-8 -mt-10 md:-mt-16 relative">
+      <div class="flex flex-col sm:flex-row justify-between items-center sm:items-end gap-4">
+        <div class="flex flex-col sm:flex-row items-center sm:items-end gap-4 md:gap-6 text-center sm:text-left">
+          <div id="profilePicWrap" onclick="triggerProfileUpload()" class="relative cursor-pointer group">
+            <img id="profilePic" src="" 
+                 class="w-28 h-28 md:w-44 md:h-44 rounded-3xl border-4 border-white dark:border-slate-900 shadow-xl object-cover" alt="">
+            <div id="profilePicEditHint" class="hidden absolute bottom-3 right-3 bg-blue-600 text-white p-2 md:p-3 rounded-2xl shadow-lg group-hover:scale-110 transition">
+              <i class="fa-solid fa-camera"></i>
+            </div>
+          </div>
+          <div class="mb-2 sm:mb-6">
+            <h1 id="userName" class="text-xl md:text-2xl font-bold"></h1>
+            <p id="userHandle" class="text-slate-500"></p>
+          </div>
+        </div>
+        <div class="flex gap-3 mb-4 sm:mb-6">
+          <button id="editProfileBtn" onclick="editProfile()"
+                  class="hidden bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border dark:border-slate-700 px-5 py-2.5 rounded-2xl text-sm font-medium flex items-center gap-2 shadow">
+            <i class="fa-solid fa-pen"></i> Edit Profile
+          </button>
+          <button id="followBtn" onclick="toggleFollow()"
+                  class="hidden bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-2xl text-sm font-medium shadow">
+            Follow
+          </button>
+          <button id="friendActionBtn" onclick="handleFriendAction()"
+                  class="hidden bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-2xl text-sm font-medium shadow">
+            Add Friend
+          </button>
+        </div>
+      </div>
+
+      <!-- Bio -->
+      <div class="mt-2 max-w-xl mx-auto sm:mx-0 text-center sm:text-left">
+        <p id="userBio"></p>
+      </div>
+
+      <!-- Stats -->
+      <div class="flex flex-wrap justify-center sm:justify-start gap-6 md:gap-8 mt-8 text-center">
+        <div><p id="postsCount" class="text-2xl md:text-3xl font-bold">0</p><p class="text-slate-500 text-sm md:text-base">Posts</p></div>
+        <div><p id="followersCount" class="text-2xl md:text-3xl font-bold">0</p><p class="text-slate-500 text-sm md:text-base">Followers</p></div>
+        <div><h2 id="friendsCount" class="text-xl md:text-2xl font-bold">0</h2><p class="text-slate-500 text-sm md:text-base">Friends</p></div>
+        <div><p id="followingCount" class="text-2xl md:text-3xl font-bold">0</p><p class="text-slate-500 text-sm md:text-base">Following</p></div>
+      </div>
+
+      <div class="mt-8 bg-white dark:bg-slate-900 rounded-3xl p-4 md:p-6 shadow">
+        <h3 class="text-lg md:text-xl font-bold mb-3">Account Information</h3>
+        <div class="space-y-3">
+          <p class="flex flex-col sm:flex-row sm:gap-2 break-words"><strong>Email:</strong><span id="userEmail"></span></p>
+          <p class="flex flex-col sm:flex-row sm:gap-2 break-words"><strong>Joined:</strong><span id="joinedDate"></span></p>
+        </div>
+      </div>
+
+      <!-- Friend Requests -->
+      <div id="friendRequestsSection" class="hidden mt-8 bg-white dark:bg-slate-900 rounded-3xl p-4 md:p-6 shadow">
+        <h3 class="text-lg md:text-xl font-bold mb-4">Friend Requests</h3>
+        <div id="friendRequestsList" class="space-y-3"></div>
+      </div>
+
+      <!-- Edit Profile Modal -->
+      <div id="editModal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[100] p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div class="p-4 md:p-6 border-b dark:border-slate-700">
+            <h2 class="text-xl md:text-2xl font-bold">Edit Profile</h2>
+          </div>
+          <div class="p-4 md:p-6 space-y-6">
+            <div>
+              <label class="block text-sm mb-2">Full Name</label>
+              <input id="editName" type="text"
+                     class="w-full px-5 py-4 rounded-2xl border dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+            </div>
+            <div>
+              <label class="block text-sm mb-2">Bio</label>
+              <textarea id="editBio" rows="3"
+                        class="w-full px-5 py-4 rounded-3xl border dark:border-slate-700 bg-slate-50 dark:bg-slate-800"></textarea>
+            </div>
+          </div>
+          <div class="p-4 md:p-6 border-t dark:border-slate-700 flex flex-col sm:flex-row gap-3 md:gap-4">
+            <button onclick="closeModal()"
+                    class="flex-1 py-3 md:py-4 rounded-3xl border font-medium">Cancel</button>
+            <button onclick="saveProfile()"
+                    class="flex-1 py-3 md:py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-3xl font-semibold">Save Changes</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Posts -->
+      <div class="flex border-b border-slate-200 dark:border-slate-700 mt-10">
+        <button class="px-4 md:px-8 py-3 md:py-4 font-medium border-b-4 border-blue-600 text-blue-600">Posts</button>
+      </div>
+
+      <div id="postsSection" class="pt-8 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6"></div>
+    </div>
+  </div>
+
+  <!-- Hidden File Inputs -->
+  <input type="file" id="profileUpload" accept="image/*" class="hidden" onchange="handleProfilePicChange(event)">
+  <input type="file" id="coverUpload" accept="image/*" class="hidden" onchange="handleCoverPhotoChange(event)">
+
+  <script>
+    // ======================================
+    // CONFIG / AUTH
+    // ======================================
+    const API_URL = window.location.origin + '/social-site/backend/api';
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("Please login first!");
+      window.location.href = "login.html";
+    }
+
+    const currentUser = JSON.parse(localStorage.getItem("loggedInUser") || "{}");
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewedUserId = urlParams.get('user_id') || currentUser.id;
+    const isOwnProfile = String(viewedUserId) === String(currentUser.id);
+
+    async function apiCall(endpoint, method = 'GET', data = null, isFile = false) {
+      const options = {
+        method,
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      };
+      if (!isFile) {
+        options.headers['Content-Type'] = 'application/json';
+        if (data) options.body = JSON.stringify(data);
+      } else if (data) {
+        options.body = data;
+      }
+      try {
+        const response = await fetch(`${API_URL}/${endpoint}`, options);
+        return await response.json();
+      } catch (error) {
+        console.error('API Error:', error);
+        return { success: false, message: 'Network error' };
+      }
+    }
+
+    function avatarFor(user) {
+      return user.profile_pic && user.profile_pic !== 'default.jpg'
+        ? 'backend/' + user.profile_pic
+        : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name || user.username || 'User')}&background=2563eb&color=ffffff`;
+    }
+
+    // ======================================
+    // LOAD PROFILE
+    // ======================================
+    let profileUser = null;
+
+    async function loadProfile() {
+      const result = await apiCall(`users/profile.php?user_id=${viewedUserId}`);
+      if (!result.success || !result.user) {
+        alert(result.message || 'Could not load this profile.');
+        return;
+      }
+      profileUser = result.user;
+
+      const avatar = avatarFor(profileUser);
+      document.getElementById("navProfile").src = isOwnProfile ? avatar : avatarFor(currentUser);
+      document.getElementById("profilePic").src = avatar;
+      document.getElementById("userName").textContent = profileUser.full_name || profileUser.username;
+      document.getElementById("userHandle").textContent = "@" + profileUser.username;
+      document.getElementById("userBio").textContent = profileUser.bio || "No bio added yet.";
+      document.getElementById("userEmail").textContent = profileUser.email;
+      document.getElementById("joinedDate").textContent = profileUser.created_at
+        ? new Date(profileUser.created_at).toLocaleDateString()
+        : "Recently Joined";
+
+      const coverEl = document.getElementById("coverPhoto");
+      if (profileUser.cover_photo) {
+        coverEl.style.backgroundImage = `url(backend/${profileUser.cover_photo})`;
+      } else {
+        coverEl.style.backgroundImage = '';
+      }
+
+      // Only the profile owner can change their own photos.
+      document.getElementById("coverPhoto").style.cursor = isOwnProfile ? 'pointer' : 'default';
+      document.getElementById("profilePicWrap").style.cursor = isOwnProfile ? 'pointer' : 'default';
+      document.getElementById("coverEditHint").classList.toggle('hidden', !isOwnProfile);
+      if (isOwnProfile) document.getElementById("coverEditHint").classList.add('flex');
+      document.getElementById("profilePicEditHint").classList.toggle('hidden', !isOwnProfile);
+
+      document.getElementById("postsCount").textContent = result.post_count ?? 0;
+      document.getElementById("friendsCount").textContent = result.friend_count ?? 0;
+      document.getElementById("followersCount").textContent = result.followers_count ?? 0;
+      document.getElementById("followingCount").textContent = result.following_count ?? 0;
+
+      document.getElementById("editProfileBtn").classList.toggle('hidden', !isOwnProfile);
+      document.getElementById("friendRequestsSection").classList.toggle('hidden', !isOwnProfile);
+
+      const followBtn = document.getElementById("followBtn");
+      if (!isOwnProfile) {
+        followBtn.classList.remove('hidden');
+        setFollowButtonState(!!result.is_following);
+      } else {
+        followBtn.classList.add('hidden');
+      }
+
+      const friendBtn = document.getElementById("friendActionBtn");
+      if (!isOwnProfile) {
+        friendBtn.classList.remove('hidden');
+        currentFriendRequestId = result.friend_request_id || null;
+        setFriendButtonState(result.friend_status || 'none');
+      } else {
+        friendBtn.classList.add('hidden');
+      }
+
+      if (isOwnProfile) loadFriendRequests();
+    }
+
+    // ======================================
+    // FOLLOW / UNFOLLOW
+    // ======================================
+    function setFollowButtonState(following) {
+      const btn = document.getElementById('followBtn');
+      if (following) {
+        btn.textContent = 'Following';
+        btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+        btn.classList.add('bg-slate-600', 'hover:bg-slate-700');
+      } else {
+        btn.textContent = 'Follow';
+        btn.classList.remove('bg-slate-600', 'hover:bg-slate-700');
+        btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+      }
+    }
+
+    async function toggleFollow() {
+      const result = await apiCall('users/follow.php', 'POST', { user_id: viewedUserId });
+      if (result.success) {
+        setFollowButtonState(result.following);
+        document.getElementById("followersCount").textContent = result.followers_count;
+      } else {
+        alert(result.message);
+      }
+    }
+
+    // ======================================
+    // FRIEND ADD / UNFRIEND (on another user's profile)
+    // ======================================
+    let currentFriendRequestId = null;
+
+    function setFriendButtonState(status) {
+      const btn = document.getElementById('friendActionBtn');
+      btn.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'bg-slate-600', 'hover:bg-slate-700', 'bg-red-600', 'hover:bg-red-700', 'bg-green-600', 'hover:bg-green-700');
+      switch (status) {
+        case 'accepted':
+          btn.textContent = 'Unfriend';
+          btn.classList.add('bg-red-600', 'hover:bg-red-700');
+          break;
+        case 'pending_sent':
+          btn.textContent = 'Cancel Request';
+          btn.classList.add('bg-slate-600', 'hover:bg-slate-700');
+          break;
+        case 'pending_received':
+          btn.textContent = 'Accept Request';
+          btn.classList.add('bg-green-600', 'hover:bg-green-700');
+          break;
+        default:
+          btn.textContent = 'Add Friend';
+          btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+      }
+    }
+
+    async function handleFriendAction() {
+      const status = document.getElementById('friendActionBtn').textContent.trim();
+
+      if (status === 'Add Friend') {
+        const result = await apiCall('friends/send_request.php', 'POST', { receiver_id: viewedUserId });
+        if (result.success) {
+          setFriendButtonState('pending_sent');
+        } else {
+          alert(result.message || 'Could not send friend request');
+        }
+        return;
+      }
+
+      if (status === 'Unfriend') {
+        const ok = confirm(`Remove ${profileUser?.full_name || 'this user'} from your friends?`);
+        if (!ok) return;
+        const result = await apiCall('friends/unfriend.php', 'POST', { friend_id: viewedUserId });
+        if (result.success) {
+          setFriendButtonState('none');
+          currentFriendRequestId = null;
+          loadProfile(); // refresh friend count
+        } else {
+          alert(result.message || 'Could not remove friend');
+        }
+        return;
+      }
+
+      if (status === 'Accept Request') {
+        if (!currentFriendRequestId) return;
+        const result = await apiCall('friends/respond.php', 'POST', { request_id: currentFriendRequestId, action: 'accept' });
+        if (result.success) {
+          setFriendButtonState('accepted');
+          loadProfile(); // refresh friend count
+        } else {
+          alert(result.message || 'Could not accept request');
+        }
+        return;
+      }
+
+      if (status === 'Cancel Request') {
+        // Cancelling is the same as rejecting your own pending outgoing request.
+        if (!currentFriendRequestId) return;
+        const result = await apiCall('friends/respond.php', 'POST', { request_id: currentFriendRequestId, action: 'reject' });
+        if (result.success) {
+          setFriendButtonState('none');
+          currentFriendRequestId = null;
+        } else {
+          alert(result.message || 'Could not cancel request');
+        }
+        return;
+      }
+    }
+
+    // ======================================
+    // PROFILE / COVER PHOTO UPLOAD (own profile only)
+    // ======================================
+    function triggerProfileUpload() {
+      if (!isOwnProfile) return;
+      document.getElementById('profileUpload').click();
+    }
+
+    function triggerCoverUpload() {
+      if (!isOwnProfile) return;
+      document.getElementById('coverUpload').click();
+    }
+
+    async function handleProfilePicChange(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('type', 'profile');
+      formData.append('image', file);
+
+      const result = await apiCall('users/upload_photo.php', 'POST', formData, true);
+      e.target.value = '';
+
+      if (result.success) {
+        currentUser.profile_pic = result.path;
+        localStorage.setItem('loggedInUser', JSON.stringify(currentUser));
+        loadProfile();
+      } else {
+        alert(result.message || 'Could not upload photo.');
+      }
+    }
+
+    async function handleCoverPhotoChange(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('type', 'cover');
+      formData.append('image', file);
+
+      const result = await apiCall('users/upload_photo.php', 'POST', formData, true);
+      e.target.value = '';
+
+      if (result.success) {
+        loadProfile();
+      } else {
+        alert(result.message || 'Could not upload photo.');
+      }
+    }
+
+    // ======================================
+    // EDIT PROFILE (own profile only)
+    // ======================================
+    function editProfile() {
+      document.getElementById("editName").value = profileUser.full_name || '';
+      document.getElementById("editBio").value = profileUser.bio || '';
+      document.getElementById('editModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('editModal').classList.add('hidden');
+    }
+
+    async function saveProfile() {
+      const full_name = document.getElementById("editName").value.trim();
+      const bio = document.getElementById("editBio").value.trim();
+
+      const result = await apiCall('users/profile.php', 'PUT', { full_name, bio });
+      if (result.success) {
+        closeModal();
+        loadProfile();
+      } else {
+        alert(result.message || 'Could not update profile.');
+      }
+    }
+
+    // ======================================
+    // FRIEND REQUESTS (own profile only)
+    // ======================================
+    async function loadFriendRequests() {
+      const result = await apiCall('friends/get_requests.php');
+      const section = document.getElementById("friendRequestsSection");
+      const container = document.getElementById("friendRequestsList");
+
+      if (!result.success || !result.requests || result.requests.length === 0) {
+        section.classList.add('hidden');
+        return;
+      }
+
+      section.classList.remove('hidden');
+      container.innerHTML = result.requests.map(r => `
+        <div class="flex items-center justify-between bg-slate-100 dark:bg-slate-800 rounded-2xl p-4 gap-3 flex-wrap">
+          <div class="flex items-center gap-3">
+            <img src="${avatarFor(r)}" class="w-12 h-12 rounded-xl object-cover">
+            <div>
+              <h4 class="font-semibold">${r.full_name || r.username}</h4>
+              <p class="text-sm text-slate-500">@${r.username}</p>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="respondRequest(${r.request_id}, 'accept')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-medium">Accept</button>
+            <button onclick="respondRequest(${r.request_id}, 'reject')" class="bg-slate-300 dark:bg-slate-700 px-4 py-2 rounded-xl text-sm font-medium">Reject</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function respondRequest(requestId, action) {
+      const result = await apiCall('friends/respond.php', 'POST', { request_id: requestId, action });
+      if (result.success) {
+        loadFriendRequests();
+        loadProfile();
+      } else {
+        alert(result.message);
+      }
+    }
+
+    // ======================================
+    // PROFILE POSTS (own posts, with edit/delete)
+    // ======================================
+    let profilePostsData = {};
+
+    async function loadProfilePosts() {
+      const result = await apiCall('posts/get.php');
+      const container = document.getElementById("postsSection");
+
+      if (!result.success || !result.posts) {
+        container.innerHTML = '';
+        return;
+      }
+
+      const myPosts = result.posts.filter(p => String(p.user_id) === String(viewedUserId));
+      profilePostsData = {};
+      myPosts.forEach(p => profilePostsData[p.id] = p);
+
+      if (myPosts.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full bg-white dark:bg-slate-900 rounded-3xl p-8 text-center">
+            <h2 class="text-2xl font-bold">No Posts Yet</h2>
+            <p class="text-slate-500 mt-3">${isOwnProfile ? 'Create your first post from the Home page.' : "This user hasn't posted anything yet."}</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = myPosts.map(post => {
+        const postImage = post.image ? 'backend/' + post.image : '';
+        const isOwnPost = String(post.user_id) === String(currentUser.id);
+
+        return `
+          <div class="bg-white dark:bg-slate-900 rounded-3xl p-6">
+            <div class="flex items-center justify-between">
+              <p class="text-xs text-slate-500">${new Date(post.created_at).toLocaleString()}${post.updated_at ? ' • Edited' : ''}</p>
+              ${isOwnPost ? `
+                <div class="flex gap-3 text-slate-400">
+                  <button onclick="startEditProfilePost(${post.id})" title="Edit post" class="hover:text-blue-600 transition"><i class="fa-solid fa-pen"></i></button>
+                  <button onclick="deleteProfilePost(${post.id})" title="Delete post" class="hover:text-red-600 transition"><i class="fa-solid fa-trash"></i></button>
+                </div>
+              ` : ''}
+            </div>
+            <div id="profilePostBody-${post.id}">
+              <p class="mt-2">${post.content || ''}</p>
+              ${postImage ? `<img src="${postImage}" class="rounded-2xl w-full max-h-72 object-cover mt-3">` : ''}
+            </div>
+            <div class="mt-4 text-sm text-slate-500">❤️ ${post.like_count} &nbsp; 💬 ${post.comment_count}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function startEditProfilePost(postId) {
+      const post = profilePostsData[postId];
+      if (!post) return;
+      const body = document.getElementById(`profilePostBody-${postId}`);
+      body.innerHTML = `
+        <textarea id="editProfilePostInput-${postId}" rows="3"
+          class="w-full bg-slate-100 dark:bg-slate-800 rounded-2xl p-3 outline-none resize-none mt-2">${post.content || ''}</textarea>
+        <div class="flex gap-3 mt-2">
+          <button onclick="saveEditProfilePost(${postId})" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-xl text-sm font-medium">Save</button>
+          <button onclick="loadProfilePosts()" class="px-4 py-1.5 rounded-xl text-sm font-medium border dark:border-slate-700">Cancel</button>
+        </div>
+      `;
+    }
+
+    async function saveEditProfilePost(postId) {
+      const input = document.getElementById(`editProfilePostInput-${postId}`);
+      const content = input.value.trim();
+      if (!content) {
+        alert("Post can't be empty!");
+        return;
+      }
+      const result = await apiCall('posts/update.php', 'POST', { post_id: postId, content });
+      if (result.success) {
+        loadProfilePosts();
+      } else {
+        alert(result.message);
+      }
+    }
+
+    async function deleteProfilePost(postId) {
+      const ok = confirm("Delete this post? This can't be undone.");
+      if (!ok) return;
+      const result = await apiCall('posts/delete.php', 'POST', { post_id: postId });
+      if (result.success) {
+        loadProfilePosts();
+        loadProfile();
+      } else {
+        alert(result.message);
+      }
+    }
+
+    // ======================================
+    // LOGOUT
+    // ======================================
+    function logout() {
+      const ok = confirm("Are you sure you want to logout?");
+      if (!ok) return;
+      localStorage.removeItem("token");
+      localStorage.removeItem("loggedInUser");
+      window.location.href = "login.html";
+    }
+
+    // ======================================
+    // INIT
+    // ======================================
+    loadProfile();
+    loadProfilePosts();
+  </script>
+</body>
+</html>

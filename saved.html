@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusSphere | Saved Posts</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <script>
+    tailwind.config = { darkMode: "class" }
+  </script>
+</head>
+
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-white min-h-screen">
+
+  <!-- MOBILE TOPBAR -->
+  <div class="md:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-40 flex items-center justify-between px-4">
+    <h1 class="text-xl font-bold text-blue-600">CampusSphere</h1>
+    <button onclick="toggleSidebar()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
+      <i class="fa-solid fa-bars text-xl"></i>
+    </button>
+  </div>
+
+  <!-- MOBILE SIDEBAR OVERLAY -->
+  <div id="sidebarOverlay" onclick="toggleSidebar()" class="hidden fixed inset-0 bg-black/50 z-40 md:hidden"></div>
+
+  <!-- LEFT SIDEBAR -->
+  <div id="leftSidebar" class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 fixed h-screen overflow-y-auto z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300 top-0 pt-20 md:pt-0">
+    <div class="p-4">
+      <h1 class="text-3xl font-bold text-blue-600 mb-8 px-4">CampusSphere</h1>
+
+      <!-- USER CARD -->
+      <div class="px-4 mb-8">
+        <div class="bg-slate-100 dark:bg-slate-800 rounded-3xl p-4">
+          <img id="sidebarProfile" class="w-16 h-16 rounded-2xl object-cover mb-3" src="">
+          <h2 id="sidebarName" class="font-bold text-lg"></h2>
+          <p id="sidebarUsername" class="text-slate-500"></p>
+        </div>
+      </div>
+
+      <!-- MENU -->
+      <nav class="space-y-2">
+        <a href="home.html" class="flex items-center gap-4 px-4 py-3 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800">
+          <i class="fa-solid fa-house text-xl"></i><span>Home</span>
+        </a>
+        <a href="explore.html" class="flex items-center gap-4 px-4 py-3 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800">
+          <i class="fa-solid fa-magnifying-glass text-xl"></i><span>Explore</span>
+        </a>
+        <a href="notifications.html" class="flex items-center gap-4 px-4 py-3 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 relative">
+          <i class="fa-solid fa-bell text-xl"></i><span>Notifications</span>
+          <span id="notif-count" class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full hidden">0</span>
+        </a>
+        <a href="messages.html" class="flex items-center gap-4 px-4 py-3 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800">
+          <i class="fa-solid fa-envelope text-xl"></i><span>Messages</span>
+        </a>
+        <a href="profile.html" class="flex items-center gap-4 px-4 py-3 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800">
+          <i class="fa-solid fa-user text-xl"></i><span>Profile</span>
+        </a>
+        <a href="saved.html" class="flex items-center gap-4 px-4 py-3 rounded-2xl bg-blue-50 dark:bg-slate-800 text-blue-600 font-semibold">
+          <i class="fa-solid fa-bookmark text-xl"></i><span>Saved Posts</span>
+        </a>
+        <button onclick="logout()" class="flex items-center gap-4 px-4 py-3 rounded-2xl hover:bg-red-100 dark:hover:bg-red-900 text-red-500 w-full text-left mt-4">
+          <i class="fa-solid fa-right-from-bracket text-xl"></i><span>Logout</span>
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="pt-16 md:pt-0 md:ml-64 lg:mr-80">
+    <div class="max-w-2xl mx-auto py-6 sm:py-8 px-4 sm:px-0">
+      <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm p-6 mb-6">
+        <h2 class="text-3xl font-bold flex items-center gap-3">
+          <i class="fa-solid fa-bookmark text-blue-600"></i> Saved Posts
+        </h2>
+        <p class="text-slate-500 mt-2">All your bookmarked posts will appear here.</p>
+      </div>
+
+      <!-- POSTS -->
+      <div id="savedPostsContainer" class="space-y-6"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT SIDEBAR -->
+  <div class="hidden lg:block w-80 fixed right-0 h-screen bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800">
+    <div class="p-6">
+      <h3 class="font-bold text-xl mb-5">Saved Tips</h3>
+      <div class="bg-slate-100 dark:bg-slate-800 rounded-2xl p-4">
+        <p>💡 Save important posts to read them later.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ======================================
+    // MOBILE SIDEBAR TOGGLE
+    // ======================================
+    function toggleSidebar() {
+      const sidebar = document.getElementById("leftSidebar");
+      const overlay = document.getElementById("sidebarOverlay");
+      sidebar.classList.toggle("-translate-x-full");
+      overlay.classList.toggle("hidden");
+    }
+
+    // ======================================
+    // API CONFIGURATION
+    // ======================================
+    const API_URL = window.location.origin + '/social-site/backend/api';
+    const token = localStorage.getItem("token");
+    const currentUser = JSON.parse(localStorage.getItem("loggedInUser") || "{}");
+
+    if (!token || !currentUser.id) {
+      alert("Please login first!");
+      window.location.href = "login.html";
+    }
+
+    // ======================================
+    // LOAD USER IN SIDEBAR
+    // ======================================
+    function loadSidebarUser() {
+      const profilePicUrl = currentUser.profile_pic && currentUser.profile_pic !== 'default.jpg'
+        ? 'backend/' + currentUser.profile_pic
+        : `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.full_name || currentUser.username)}&background=2563eb&color=fff`;
+
+      document.getElementById("sidebarProfile").src = profilePicUrl;
+      document.getElementById("sidebarName").textContent = currentUser.full_name || currentUser.username;
+      document.getElementById("sidebarUsername").textContent = "@" + currentUser.username;
+    }
+
+    // ======================================
+    // API CALL HELPER
+    // ======================================
+    async function apiCall(endpoint, method = 'GET', data = null) {
+      const options = {
+        method: method,
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        }
+      };
+      if (data) options.body = JSON.stringify(data);
+
+      try {
+        const response = await fetch(`${API_URL}/${endpoint}`, options);
+        return await response.json();
+      } catch (error) {
+        console.error('API Error:', error);
+        return { success: false, message: 'Network error' };
+      }
+    }
+
+    // ======================================
+    // LOAD NOTIFICATION BADGE
+    // ======================================
+    async function loadNotificationBadge() {
+      const result = await apiCall('notifications/get.php');
+      const badge = document.getElementById("notif-count");
+
+      if (result.success && result.unread_count > 0) {
+        badge.classList.remove("hidden");
+        badge.textContent = result.unread_count;
+      } else {
+        badge.classList.add("hidden");
+      }
+    }
+
+    // ======================================
+    // RENDER SAVED POSTS (backend-backed, per account)
+    // ======================================
+    async function renderSavedPosts() {
+      const container = document.getElementById("savedPostsContainer");
+
+      container.innerHTML = `
+        <div class="text-center py-10">
+          <i class="fa-solid fa-spinner fa-spin text-3xl text-blue-500"></i>
+          <p class="mt-2 text-slate-500">Loading saved posts...</p>
+        </div>`;
+
+      const result = await apiCall('posts/saved.php');
+
+      if (!result.success) {
+        container.innerHTML = `<p class="text-center text-slate-500">${result.message || 'Error loading posts'}</p>`;
+        return;
+      }
+
+      const savedPosts = result.posts || [];
+
+      if (savedPosts.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white dark:bg-slate-900 rounded-3xl p-10 text-center shadow">
+            <i class="fa-solid fa-bookmark text-6xl text-slate-400 mb-5"></i>
+            <h2 class="text-2xl font-bold">No Saved Posts Yet</h2>
+            <p class="text-slate-500 mt-2">Save posts from Home to see them here.</p>
+            <a href="home.html" class="inline-block mt-4 bg-blue-600 text-white px-6 py-3 rounded-xl">Browse Posts</a>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = "";
+
+      savedPosts.forEach(post => {
+        const profilePic = post.profile_pic && post.profile_pic !== 'default.jpg'
+          ? 'backend/' + post.profile_pic
+          : `https://ui-avatars.com/api/?name=${encodeURIComponent(post.full_name)}&background=2563eb&color=fff`;
+
+        const postImage = post.image
+          ? `<img src="backend/${post.image}" class="rounded-2xl w-full mt-4 object-cover max-h-96">`
+          : '';
+
+        container.innerHTML += `
+          <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm p-5">
+            <div class="flex items-center gap-3">
+              <img src="${profilePic}" class="w-12 h-12 rounded-2xl object-cover">
+              <div>
+                <h4 class="font-semibold">${post.full_name}</h4>
+                <p class="text-sm text-slate-500">@${post.username} • ${new Date(post.created_at).toLocaleString()}</p>
+              </div>
+            </div>
+            <p class="my-4">${post.content || ''}</p>
+            ${postImage}
+            <div class="flex justify-between items-center mt-5 border-t border-slate-200 dark:border-slate-700 pt-4">
+              <span class="text-red-500 font-semibold">❤️ ${post.like_count}</span>
+              <button onclick="removeSaved(${post.id})" class="text-green-600 hover:text-red-600 font-semibold transition">
+                ❌ Unsave
+              </button>
+              <button onclick="sharePost('${(post.content || '').replace(/'/g, "\\'")}')" class="text-blue-600 font-semibold">
+                📤 Share
+              </button>
+            </div>
+          </div>`;
+      });
+    }
+
+    // ======================================
+    // REMOVE FROM SAVED
+    // ======================================
+    async function removeSaved(postId) {
+      const result = await apiCall('posts/save.php', 'POST', { post_id: postId });
+      if (!result.success) {
+        alert(result.message);
+        return;
+      }
+      renderSavedPosts();
+    }
+
+    // ======================================
+    // SHARE POST
+    // ======================================
+    function sharePost(content) {
+      navigator.clipboard.writeText(content).then(() => {
+        alert("✅ Post copied to clipboard!");
+      }).catch(() => {
+        prompt("Copy this post:", content);
+      });
+    }
+
+    // ======================================
+    // LOGOUT
+    // ======================================
+    function logout() {
+      const ok = confirm("Are you sure you want to logout?");
+      if (!ok) return;
+      localStorage.removeItem("token");
+      localStorage.removeItem("loggedInUser");
+      window.location.href = "login.html";
+    }
+
+    // ======================================
+    // INITIALIZE
+    // ======================================
+    loadSidebarUser();
+    loadNotificationBadge();
+    renderSavedPosts();
+  </script>
+
+</body>
+</html>

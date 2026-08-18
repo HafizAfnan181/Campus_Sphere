@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>CampusSphere | Connect Your Campus</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+
+<style>
+
+body{
+overflow-x:hidden;
+background:#050816;
+}
+
+.blur1{
+position:absolute;
+width:450px;
+height:450px;
+background:#2563eb;
+filter:blur(150px);
+opacity:.25;
+top:-100px;
+left:-100px;
+animation:float 8s ease-in-out infinite;
+}
+
+.blur2{
+position:absolute;
+width:450px;
+height:450px;
+background:#9333ea;
+filter:blur(150px);
+opacity:.25;
+bottom:-100px;
+right:-100px;
+animation:float 10s ease-in-out infinite;
+}
+
+@keyframes float{
+
+0%{transform:translateY(0px);}
+50%{transform:translateY(30px);}
+100%{transform:translateY(0px);}
+
+}
+
+.glass{
+
+background:rgba(255,255,255,.08);
+
+backdrop-filter:blur(15px);
+
+border:1px solid rgba(255,255,255,.12);
+
+}
+
+</style>
+
+</head>
+
+<body class="text-white">
+
+<div class="blur1"></div>
+<div class="blur2"></div>
+
+<!-- Navbar -->
+
+<nav class="relative z-20 flex justify-between items-center px-4 sm:px-6 lg:px-10 py-4 sm:py-6">
+
+<div class="text-2xl sm:text-3xl font-bold">
+
+<span class="text-blue-500">Campus</span>Sphere
+
+</div>
+
+<div class="flex gap-3 sm:gap-5 items-center">
+
+<a href="login.html"
+class="hover:text-blue-400 transition">
+
+Login
+
+</a>
+
+<a href="register.html"
+class="bg-blue-600 px-5 py-2 rounded-xl hover:bg-blue-700 transition">
+
+Register
+
+</a>
+
+</div>
+
+</nav>
+
+<!-- Hero -->
+
+<section class="relative z-20 min-h-screen flex items-center py-10">
+
+<div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+
+<div>
+
+<p class="uppercase tracking-widest text-blue-400 mb-4">
+
+WELCOME TO CAMPUSSPHERE
+
+</p>
+
+<h1 class="text-4xl sm:text-5xl lg:text-6xl font-black leading-tight">
+
+Connect Your
+
+<span class="text-blue-500">
+
+Campus
+
+</span>
+
+Like Never Before
+
+</h1>
+
+<p class="mt-8 text-gray-300 text-base sm:text-lg leading-8">
+
+Share updates, chat with classmates, discover events,
+build communities and enjoy a modern social platform
+designed specially for students.
+
+</p>
+
+<div class="mt-10 flex flex-col sm:flex-row gap-4">
+
+<a href="login.html"
+class="bg-blue-600 hover:bg-blue-700 px-6 py-3 sm:px-8 sm:py-4 rounded-xl text-base sm:text-lg font-semibold">
+
+Get Started
+
+</a>
+
+<a href="register.html"
+class="glass px-6 py-3 sm:px-8 sm:py-4 rounded-xl text-center hover:scale-105 transition">
+
+Create Account
+
+</a>
+
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-12">
+
+<div>
+
+<h2 class="text-4xl font-bold text-blue-400">
+
+500+
+
+</h2>
+
+<p class="text-gray-400">
+
+Students
+
+</p>
+
+</div>
+
+<div>
+
+<h2 class="text-4xl font-bold text-purple-400">
+
+120+
+
+</h2>
+
+<p class="text-gray-400">
+
+Events
+
+</p>
+
+</div>
+
+<div>
+
+<h2 class="text-4xl font-bold text-green-400">
+
+24/7
+
+</h2>
+
+<p class="text-gray-400">
+
+Community
+
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- Right Side -->
+
+<div class="glass rounded-3xl p-6 sm:p-10">
+
+<img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=900"
+class="rounded-2xl mb-8">
+
+<div class="grid grid-cols-2 gap-3 sm:gap-5">
+
+<div class="glass rounded-xl p-6 text-center">
+
+<i class="fa-solid fa-users text-4xl text-blue-400 mb-4"></i>
+
+<h3 class="font-bold text-xl">
+
+Connect
+
+</h3>
+
+</div>
+
+<div class="glass rounded-xl p-6 text-center">
+
+<i class="fa-solid fa-message text-4xl text-green-400 mb-4"></i>
+
+<h3 class="font-bold text-xl">
+
+Chat
+
+</h3>
+
+</div>
+
+<div class="glass rounded-xl p-6 text-center">
+
+<i class="fa-solid fa-calendar text-4xl text-yellow-400 mb-4"></i>
+
+<h3 class="font-bold text-xl">
+
+Events
+
+</h3>
+
+</div>
+
+<div class="glass rounded-xl p-6 text-center">
+
+<i class="fa-solid fa-user-group text-4xl text-pink-400 mb-4"></i>
+
+<h3 class="font-bold text-xl">
+
+Community
+
+</h3>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<footer class="relative z-20 border-t border-slate-800 mt-20">
+
+    <div class="max-w-7xl mx-auto px-8 py-10">
+
+        <div class="grid md:grid-cols-2 gap-8 items-center">
+
+            <div>
+
+                <h3 class="text-2xl font-bold">
+
+                    <span class="text-blue-500">Campus</span>Sphere
+
+                </h3>
+
+                <p class="text-gray-400 mt-2">
+
+                    Developed  by Hafiz Afnan
+
+                </p>
+
+            </div>
+
+            <div class="md:text-right space-y-2">
+
+                <p>
+
+                    <i class="fa-solid fa-user text-blue-400 mr-2"></i>
+
+                    <strong>Developer:</strong> Hafiz Afnan
+
+                </p>
+
+                <p>
+
+                    <i class="fa-solid fa-envelope text-green-400 mr-2"></i>
+
+                    <strong>Email:</strong> hafizafnan181@gmail.com
+
+                </p>
+
+                <p>
+
+                    <i class="fa-solid fa-phone text-yellow-400 mr-2"></i>
+
+                    <strong>Contact:</strong> +92 316  7690258
+
+                </p>
+
+                <p>
+
+                    <i class="fa-solid fa-location-dot text-red-400 mr-2"></i>
+
+                    <strong>Area:</strong> Sargodha, Pakistan
+
+                </p>
+
+            </div>
+
+        </div>
+
+        <div class="border-t border-slate-800 mt-8 pt-6 text-center text-gray-500 text-sm">
+
+            © 2026 CampusSphere. All Rights Reserved.
+
+        </div>
+
+    </div>
+
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ur" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications - CampusSphere</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-slate-100 dark:bg-slate-950">
+
+  <!-- Back Button -->
+  <div class="max-w-2xl mx-auto pt-4 px-3 md:px-4">
+    <a href="home.html" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium mb-2">
+      <i class="fa-solid fa-arrow-left"></i> Back to Home
+    </a>
+  </div>
+
+  <div class="max-w-2xl mx-auto py-4 md:py-8 px-3 md:px-4">
+    <div class="flex items-center justify-between flex-wrap gap-3 mb-6 md:mb-8 px-2 md:px-4">
+      <h1 class="text-2xl md:text-4xl font-bold">
+        <i class="fa-solid fa-bell text-blue-600"></i> Notifications
+      </h1>
+      <button onclick="clearAllNotifications()" class="text-sm text-red-500 hover:text-red-600 font-medium">
+        <i class="fa-solid fa-trash"></i> Clear All
+      </button>
+    </div>
+
+    <!-- Friend Requests Section -->
+    <div class="mb-8">
+      <h2 class="text-lg font-semibold text-slate-600 dark:text-slate-400 mb-4 px-2">
+        <i class="fa-solid fa-user-plus text-green-500"></i> Friend Requests
+      </h2>
+      <div id="friendRequestsContainer" class="space-y-4"></div>
+    </div>
+
+    <!-- Notifications Section -->
+    <div>
+      <h2 class="text-lg font-semibold text-slate-600 dark:text-slate-400 mb-4 px-2">
+        <i class="fa-solid fa-list text-blue-500"></i> All Notifications
+      </h2>
+      <div id="notificationsContainer" class="space-y-4"></div>
+    </div>
+  </div>
+
+  <script>
+    // ======================================
+    // API CONFIGURATION
+    // ======================================
+    const API_URL = window.location.origin + '/social-site/backend/api';
+    const token = localStorage.getItem("token");
+    const currentUser = JSON.parse(localStorage.getItem("loggedInUser") || "{}");
+
+    if (!token || !currentUser.id) {
+      window.location.href = "login.html";
+    }
+
+    // ======================================
+    // API CALL HELPER
+    // ======================================
+    async function apiCall(endpoint, method = 'GET', data = null) {
+      const options = {
+        method: method,
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        }
+      };
+      if (data) options.body = JSON.stringify(data);
+
+      try {
+        const response = await fetch(`${API_URL}/${endpoint}`, options);
+        return await response.json();
+      } catch (error) {
+        console.error('API Error:', error);
+        return { success: false, message: 'Network error' };
+      }
+    }
+
+    // ======================================
+    // LOAD FRIEND REQUESTS
+    // ======================================
+    async function loadFriendRequests() {
+      const container = document.getElementById("friendRequestsContainer");
+      container.innerHTML = "";
+
+      // Get notifications of type 'friend_request'
+      const result = await apiCall('notifications/get.php');
+
+      if (!result.success) {
+        container.innerHTML = '<p class="text-slate-500 text-center py-4">Error loading requests</p>';
+        return;
+      }
+
+      // Filter friend requests only
+      const friendRequests = result.notifications.filter(n => n.type === 'friend_request');
+
+      if (friendRequests.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 text-center">
+            <i class="fa-solid fa-user-group text-4xl text-slate-400 mb-3"></i>
+            <p class="text-slate-500">No pending friend requests</p>
+          </div>`;
+        return;
+      }
+
+      // Load pending requests from friends table
+      const pendingResult = await apiCall('friends/get_requests.php');
+
+      if (pendingResult.success && pendingResult.requests) {
+        pendingResult.requests.forEach(request => {
+          container.innerHTML += `
+            <div class="bg-white dark:bg-slate-900 rounded-3xl p-4 md:p-5 shadow-lg border border-slate-200 dark:border-slate-700 hover:scale-[1.01] transition">
+              <div class="flex items-center gap-3 mb-3">
+                <img src="${request.profile_pic && request.profile_pic !== 'default.jpg' ? 'backend/' + request.profile_pic : 'https://ui-avatars.com/api/?name=' + request.full_name + '&background=2563eb&color=fff'}" 
+                     class="w-12 h-12 rounded-2xl object-cover">
+                <div>
+                  <h3 class="font-bold">${request.full_name}</h3>
+                  <p class="text-sm text-slate-500">@${request.username}</p>
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-3">
+                <button onclick="respondRequest(${request.request_id}, 'accept')"
+                        class="bg-green-600 hover:bg-green-700 transition text-white px-5 py-2 rounded-xl font-semibold">
+                  <i class="fa-solid fa-check"></i> Accept
+                </button>
+                <button onclick="respondRequest(${request.request_id}, 'reject')"
+                        class="bg-red-600 hover:bg-red-700 transition text-white px-5 py-2 rounded-xl font-semibold">
+                  <i class="fa-solid fa-times"></i> Reject
+                </button>
+              </div>
+            </div>`;
+        });
+      }
+
+      if (pendingResult.requests && pendingResult.requests.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 text-center">
+            <i class="fa-solid fa-user-group text-4xl text-slate-400 mb-3"></i>
+            <p class="text-slate-500">No pending friend requests</p>
+          </div>`;
+      }
+    }
+
+    // ======================================
+    // RESPOND TO FRIEND REQUEST
+    // ======================================
+    async function respondRequest(requestId, action) {
+      const result = await apiCall('friends/respond.php', 'POST', {
+        request_id: requestId,
+        action: action
+      });
+
+      if (result.success) {
+        alert(`Friend request ${action}ed! ✅`);
+        loadFriendRequests();
+        loadNotifications();
+      } else {
+        alert(result.message || "Error processing request");
+      }
+    }
+
+    // ======================================
+    // LOAD NOTIFICATIONS
+    // ======================================
+    async function loadNotifications() {
+      const result = await apiCall('notifications/get.php');
+      const container = document.getElementById("notificationsContainer");
+      container.innerHTML = "";
+
+      if (!result.success) {
+        container.innerHTML = '<p class="text-slate-500 text-center">Error loading notifications</p>';
+        return;
+      }
+
+      // Filter out friend_request type (already shown above)
+      const notifications = (result.notifications || []).filter(n => n.type !== 'friend_request');
+
+      if (notifications.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white dark:bg-slate-900 rounded-3xl p-8 text-center">
+            <i class="fa-solid fa-bell-slash text-5xl text-slate-400 mb-4"></i>
+            <h3 class="text-xl font-bold">No Notifications</h3>
+            <p class="text-slate-500 mt-2">You're all caught up 🎉</p>
+          </div>`;
+        return;
+      }
+
+      notifications.forEach(notification => {
+        let icon = "fa-bell";
+        let color = "text-blue-500";
+        let bgColor = "bg-blue-100 dark:bg-blue-900";
+
+        switch (notification.type) {
+          case 'friend_accepted':
+            icon = "fa-user-check";
+            color = "text-green-500";
+            bgColor = "bg-green-100 dark:bg-green-900";
+            break;
+          case 'like':
+            icon = "fa-heart";
+            color = "text-red-500";
+            bgColor = "bg-red-100 dark:bg-red-900";
+            break;
+          case 'comment':
+            icon = "fa-comment";
+            color = "text-blue-500";
+            bgColor = "bg-blue-100 dark:bg-blue-900";
+            break;
+          case 'message':
+            icon = "fa-envelope";
+            color = "text-purple-500";
+            bgColor = "bg-purple-100 dark:bg-purple-900";
+            break;
+        }
+
+        const profilePic = notification.profile_pic && notification.profile_pic !== 'default.jpg'
+          ? 'backend/' + notification.profile_pic
+          : `https://ui-avatars.com/api/?name=${notification.full_name || notification.username}&background=2563eb&color=fff`;
+
+        container.innerHTML += `
+          <div class="bg-white dark:bg-slate-900 rounded-3xl p-4 md:p-5 shadow flex items-start gap-3 md:gap-4 ${notification.seen == 0 ? 'border-l-4 border-blue-500' : ''}">
+            <div class="relative flex-shrink-0">
+              <img src="${profilePic}" class="w-10 h-10 md:w-12 md:h-12 rounded-2xl object-cover">
+              <span class="absolute -bottom-1 -right-1 ${bgColor} ${color} rounded-full w-6 h-6 flex items-center justify-center text-xs">
+                <i class="fa-solid ${icon}"></i>
+              </span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="font-medium break-words">
+                <strong>@${notification.username}</strong> ${notification.message}
+              </p>
+              <p class="text-xs text-slate-500 mt-2">
+                <i class="fa-solid fa-clock"></i> ${new Date(notification.created_at).toLocaleString()}
+              </p>
+            </div>
+            <div class="flex flex-col items-end gap-2 flex-shrink-0">
+              ${notification.seen == 0 ? '<span class="w-3 h-3 bg-blue-500 rounded-full"></span>' : ''}
+              <button onclick="deleteNotification(${notification.id})" title="Delete" class="text-slate-400 hover:text-red-600 transition">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </div>`;
+      });
+    }
+
+    // ======================================
+    // MARK ALL AS SEEN (clears the bell badge)
+    // ======================================
+    async function markAllSeen() {
+      await apiCall('notifications/mark_seen.php', 'POST', { mark_all: true });
+    }
+
+    // ======================================
+    // DELETE A SINGLE NOTIFICATION
+    // ======================================
+    async function deleteNotification(notificationId) {
+      const result = await apiCall('notifications/delete.php', 'POST', { notification_id: notificationId });
+      if (result.success) {
+        loadNotifications();
+      } else {
+        alert(result.message || 'Could not delete notification');
+      }
+    }
+
+    // ======================================
+    // CLEAR ALL NOTIFICATIONS
+    // ======================================
+    async function clearAllNotifications() {
+      const ok = confirm("Clear all notifications? This can't be undone.");
+      if (!ok) return;
+      const result = await apiCall('notifications/delete.php', 'POST', { clear_all: true });
+      if (result.success) {
+        loadNotifications();
+      } else {
+        alert(result.message || 'Could not clear notifications');
+      }
+    }
+
+    // ======================================
+    // AUTO REFRESH EVERY 5 SECONDS
+    // ======================================
+    setInterval(() => {
+      loadFriendRequests();
+      loadNotifications();
+      markAllSeen();
+    }, 5000);
+
+    // ======================================
+    // INITIAL LOAD
+    // ======================================
+    loadFriendRequests();
+    loadNotifications();
+    markAllSeen();
+  </script>
+</body>
+</html>

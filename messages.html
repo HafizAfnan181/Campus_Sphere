@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ur" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusSphere • Messages</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-slate-100 dark:bg-slate-950 flex flex-col md:flex-row h-screen overflow-hidden">
+
+  <!-- Chat List (Left Side) -->
+  <div class="w-full md:w-96 flex-shrink-0 border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+    <div class="p-4 md:p-6 border-b">
+      <h2 class="text-xl md:text-2xl font-bold flex justify-between">
+        <span>Messages</span>
+        <span id="friendCount" class="text-base bg-blue-600 text-white px-3 py-1 rounded-full">0</span>
+      </h2>
+    </div>
+    <div class="overflow-y-auto h-48 md:h-[calc(100vh-80px)]">
+      <div id="friendsList"></div>
+    </div>
+  </div>
+
+  <!-- Chat Window (Right Side) -->
+  <div class="flex-1 flex flex-col min-h-0 min-w-0">
+    <!-- Chat Header -->
+    <div class="p-3 md:p-5 border-b flex items-center gap-3 md:gap-4 bg-white dark:bg-slate-900">
+      <img id="chatUserImage"
+           src="https://via.placeholder.com/45"
+           class="w-10 h-10 md:w-12 md:h-12 rounded-2xl object-cover">
+      <div>
+        <p id="chatUserName" class="font-semibold">Select a Friend</p>
+        <p id="chatStatus" class="text-green-500 text-sm flex items-center gap-2">
+          <span id="statusDot" class="w-2 h-2 rounded-full bg-green-500"></span>
+          <span id="statusText">Online</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Messages Area -->
+    <div id="messagesContainer"
+         class="flex-1 p-3 md:p-6 overflow-y-auto bg-slate-50 dark:bg-slate-950 space-y-4 md:space-y-6 min-h-0">
+      <div class="flex justify-center items-center h-full text-slate-500">
+        Select a friend to start chatting 💬
+      </div>
+    </div>
+
+    <!-- Message Input -->
+    <div class="p-3 md:p-4 bg-white dark:bg-slate-900 border-t">
+      <div class="flex gap-2 md:gap-3">
+        <input id="messageInput" type="text" placeholder="Write a message..."
+               onkeypress="if(event.key==='Enter'){sendMessage();}"
+               class="flex-1 min-w-0 bg-slate-100 dark:bg-slate-800 rounded-2xl px-4 md:px-5 py-2.5 md:py-3 outline-none">
+        <button onclick="sendMessage()"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-5 md:px-8 rounded-2xl flex-shrink-0">
+          <i class="fa-solid fa-paper-plane"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ======================================
+    // API CONFIGURATION
+    // ======================================
+    const API_URL = window.location.origin + '/social-site/backend/api';
+    const token = localStorage.getItem("token");
+    const currentUser = JSON.parse(localStorage.getItem("loggedInUser") || "{}");
+
+    if (!token || !currentUser.id) {
+      window.location.href = "login.html";
+    }
+
+    let chatUsers = [];
+    let selectedFriend = null;
+    let pollInterval = null;
+
+    // ======================================
+    // API CALL HELPER
+    // ======================================
+    async function apiCall(endpoint, method = 'GET', data = null) {
+      const options = {
+        method: method,
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        }
+      };
+      if (data) options.body = JSON.stringify(data);
+
+      try {
+        const response = await fetch(`${API_URL}/${endpoint}`, options);
+        return await response.json();
+      } catch (error) {
+        console.error('API Error:', error);
+        return { success: false, message: 'Network error' };
+      }
+    }
+
+    // ======================================
+    // LOAD CHAT USERS (FRIENDS)
+    // ======================================
+    async function loadFriends() {
+      const result = await apiCall('chat/user_list.php');
+      const container = document.getElementById("friendsList");
+
+      if (!result.success || !result.users) {
+        container.innerHTML = '<div class="p-6 text-center text-slate-500">Unable to load friends</div>';
+        return;
+      }
+
+      chatUsers = result.users;
+      document.getElementById("friendCount").textContent = chatUsers.length;
+
+      if (chatUsers.length === 0) {
+        container.innerHTML = '<div class="p-6 text-center text-slate-500">No Friends Yet</div>';
+        return;
+      }
+
+      container.innerHTML = chatUsers.map(user => {
+        const profilePic = user.profile_pic && user.profile_pic !== 'default.jpg'
+          ? 'backend/' + user.profile_pic
+          : `https://ui-avatars.com/api/?name=${user.full_name}&background=2563eb&color=fff`;
+
+        return `
+          <div onclick="selectFriend(${user.id})"
+               class="p-4 flex gap-4 cursor-pointer rounded-2xl transition ${
+                 selectedFriend === user.id
+                   ? 'bg-blue-100 dark:bg-slate-700'
+                   : 'hover:bg-slate-100 dark:hover:bg-slate-800'
+               }">
+            <img src="${profilePic}" class="w-12 h-12 rounded-2xl object-cover">
+            <div class="flex-1 min-w-0">
+              <p class="font-semibold">${user.full_name}</p>
+              <p class="text-sm text-slate-500">@${user.username}</p>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="w-2 h-2 rounded-full ${user.online_status == 1 ? 'bg-green-500' : 'bg-gray-400'}"></span>
+                <span class="text-xs ${user.online_status == 1 ? 'text-green-500' : 'text-gray-400'}">
+                  ${user.online_status == 1 ? 'Online' : 'Offline'}
+                </span>
+              </div>
+              ${user.unread_count > 0 
+                ? `<span class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full float-right">${user.unread_count}</span>`
+                : ''}
+              <p class="text-xs text-slate-400 truncate">${user.last_message || 'No messages yet'}</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ======================================
+    // SELECT FRIEND TO CHAT
+    // ======================================
+    function selectFriend(friendId) {
+      selectedFriend = friendId;
+      const user = chatUsers.find(u => u.id == friendId);
+      
+      if (!user) return;
+
+      const profilePic = user.profile_pic && user.profile_pic !== 'default.jpg'
+        ? 'backend/' + user.profile_pic
+        : `https://ui-avatars.com/api/?name=${user.full_name}&background=2563eb&color=fff`;
+
+      document.getElementById("chatUserImage").src = profilePic;
+      document.getElementById("chatUserName").textContent = user.full_name;
+
+      // Update status
+      if (user.online_status == 1) {
+        document.getElementById("statusDot").className = "w-2 h-2 rounded-full bg-green-500";
+        document.getElementById("statusText").textContent = "Online";
+        document.getElementById("statusText").className = "text-green-500 text-sm";
+      } else {
+        document.getElementById("statusDot").className = "w-2 h-2 rounded-full bg-gray-400";
+        document.getElementById("statusText").textContent = "Offline";
+        document.getElementById("statusText").className = "text-gray-400 text-sm";
+      }
+
+      loadMessages();
+      loadFriends(); // Refresh sidebar highlighting
+    }
+
+    // ======================================
+    // LOAD MESSAGES
+    // ======================================
+    async function loadMessages() {
+      const container = document.getElementById("messagesContainer");
+
+      if (!selectedFriend) {
+        container.innerHTML = '<div class="flex justify-center items-center h-full text-slate-500">Select a friend to start chatting 💬</div>';
+        return;
+      }
+
+      const result = await apiCall(`chat/get_message.php?receiver_id=${selectedFriend}`);
+
+      if (!result.success) {
+        container.innerHTML = '<div class="text-center text-slate-500 mt-20">Error loading messages</div>';
+        return;
+      }
+
+      if (!result.messages || result.messages.length === 0) {
+        container.innerHTML = '<div class="text-center text-slate-500 mt-20">No messages yet. Say hello! 👋</div>';
+        return;
+      }
+
+      container.innerHTML = result.messages.map(msg => {
+        const mine = msg.sender_id == currentUser.id;
+        return `
+          <div class="flex ${mine ? 'justify-end' : 'justify-start'}">
+            <div class="max-w-[75%]">
+              <div class="${mine ? 'bg-blue-600 text-white' : 'bg-white dark:bg-slate-800'} px-5 py-3 rounded-3xl shadow">
+                ${msg.message}
+              </div>
+              <div class="text-xs text-slate-500 mt-1 ${mine ? 'text-right' : 'text-left'} flex items-center gap-1">
+                ${new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                ${mine ? (msg.seen == 1 ? '✓✓' : '✓') : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Scroll to bottom
+      container.scrollTop = container.scrollHeight;
+    }
+
+    // ======================================
+    // SEND MESSAGE
+    // ======================================
+    async function sendMessage() {
+      if (!selectedFriend) {
+        alert("Please select a friend first.");
+        return;
+      }
+
+      const input = document.getElementById("messageInput");
+      const text = input.value.trim();
+
+      if (!text) {
+        input.focus();
+        return;
+      }
+
+      const result = await apiCall('chat/send_message.php', 'POST', {
+        receiver_id: selectedFriend,
+        message: text
+      });
+
+      if (result.success) {
+        input.value = '';
+        input.focus();
+        await loadMessages();
+        await loadFriends(); // Update last message in sidebar
+      } else {
+        alert(result.message || "Failed to send message");
+      }
+    }
+
+    // ======================================
+    // POLLING - AUTO REFRESH
+    // ======================================
+    function startPolling() {
+      // Clear previous interval
+      if (pollInterval) clearInterval(pollInterval);
+
+      // Poll every 3 seconds
+      pollInterval = setInterval(async () => {
+        await loadFriends(); // Update online status & unread counts
+        if (selectedFriend) {
+          await loadMessages(); // Refresh messages
+        }
+      }, 3000);
+    }
+
+    // ======================================
+    // KEYBOARD SHORTCUTS
+    // ======================================
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "Escape") {
+        document.getElementById("messageInput").value = "";
+        document.getElementById("messageInput").focus();
+      }
+    });
+
+    // ======================================
+    // INITIALIZE PAGE
+    // ======================================
+    async function init() {
+      await loadFriends();
+
+      // Auto-select first friend
+      if (chatUsers.length > 0 && !selectedFriend) {
+        selectFriend(chatUsers[0].id);
+      }
+
+      startPolling();
+    }
+
+    init();
+
+    // Cleanup on page leave
+    window.addEventListener('beforeunload', () => {
+      if (pollInterval) clearInterval(pollInterval);
+    });
+  </script>
+</body>
+</html>
