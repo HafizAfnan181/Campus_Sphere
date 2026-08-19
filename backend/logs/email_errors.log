@@ -1,2 +1,0 @@
-[2026-07-22 08:42:33] sendVerification to hafizafnan187@gmail.com failed: SMTP Error: Could not connect to SMTP host. Failed to connect to server SMTP server error: Failed to connect to server SMTP code: 10060 Additional SMTP info: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond
-[2026-07-23 00:37:29] sendPasswordReset to hafizafnan187@gmail.com failed: SMTP Error: Could not authenticate.
